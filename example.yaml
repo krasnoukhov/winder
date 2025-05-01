@@ -1,0 +1,9 @@
+substitutions:
+  index: "1"
+  machine_index_1: "1"
+  machine_index_2: "2"
+  machine_index_3: "3"
+  machine_index_4: "4"
+
+packages:
+  base: !include esphome/base.yaml

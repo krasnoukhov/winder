@@ -1,0 +1,33 @@
+type: custom
+text: "M${machine_index}"
+value_lambda: |-
+  if (id(menu_editing) == ${machine_index}) {
+    return id(keypad_value).state.c_str();
+  } else {
+    return to_string(int(id(length_${machine_index}).state));
+  }
+on_enter:
+  then:
+    - globals.set:
+        id: menu_editing
+        value: "${machine_index}"
+    - lambda: id(collector).clear();
+on_leave:
+  then:
+    - globals.set:
+        id: menu_editing
+        value: "0"
+    # NOTE: let key_collector clear if needed
+    - delay: 100ms
+    - if:
+        condition:
+          lambda: |-
+            return id(keypad_value).state != "";
+        then:
+          - number.set:
+              id: "length_${machine_index}"
+              value: !lambda |-
+                auto n = parse_number<float>(id(keypad_value).state);
+                return n.has_value() ? n.value() : 0;
+
+    - lambda: id(collector).clear();

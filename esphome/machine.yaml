@@ -1,0 +1,61 @@
+number:
+  - platform: template
+    id: "length_${machine_index}"
+    name: "Length ${machine_index}"
+    min_value: -1000000
+    max_value: 1000000
+    step: 0.001
+    optimistic: true
+    restore_value: yes
+    initial_value: "0"
+    mode: box
+    device_class: distance
+    unit_of_measurement: m
+    icon: mdi:sync
+    web_server:
+      sorting_group_id: group_machine_${machine_index}
+    on_value_range:
+      below: "${toggle_relay_below}"
+      then:
+        - switch.turn_on: "relay_${machine_index}"
+
+switch:
+  - platform: gpio
+    id: "relay_${machine_index}"
+    name: "Relay ${machine_index}"
+    pin: "${output_pin}"
+    icon: mdi:pause
+    web_server:
+      sorting_group_id: group_machine_${machine_index}
+    on_turn_on:
+      - delay: 250ms
+      - switch.turn_off: "relay_${machine_index}"
+
+button:
+  - platform: template
+    name: "Decrement ${machine_index}"
+    web_server:
+      sorting_group_id: group_machine_${machine_index}
+    on_press:
+      - number.set:
+          id: "length_${machine_index}"
+          value: !lambda |-
+            return id(length_${machine_index}).state - ${m_per_revolution};
+
+sensor:
+  - platform: rotary_encoder
+    id: "encoder_${machine_index}"
+    name: "Encoder ${machine_index}"
+    pin_a: "${encoder_pin_a}"
+    pin_b: "${encoder_pin_b}"
+    icon: mdi:rotate-right
+    web_server:
+      sorting_group_id: group_machine_${machine_index}
+    filters:
+      # NOTE: 100P/R
+      - multiply: !lambda return 0.01;
+    on_value:
+      - number.set:
+          id: "length_${machine_index}"
+          value: !lambda |-
+            return id(length_${machine_index}).state - ${m_per_revolution};
