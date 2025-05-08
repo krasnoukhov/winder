@@ -2,8 +2,8 @@ number:
   - platform: template
     id: "length_${machine_index}"
     name: "Length ${machine_index}"
-    min_value: -1000000
-    max_value: 1000000
+    min_value: -9999999
+    max_value: 9999999
     step: 0.001
     optimistic: true
     restore_value: yes
@@ -23,7 +23,11 @@ switch:
   - platform: gpio
     id: "relay_${machine_index}"
     name: "Relay ${machine_index}"
-    pin: "${output_pin}"
+    pin:
+      number: "${output_pin}"
+      mode:
+        output: true
+        pulldown: true
     icon: mdi:pause
     web_server:
       sorting_group_id: group_machine_${machine_index}
@@ -33,27 +37,39 @@ switch:
 
 button:
   - platform: template
-    name: "Decrement ${machine_index}"
+    name: "Reset encoder ${machine_index}"
+    icon: mdi:numeric-0-circle
     web_server:
       sorting_group_id: group_machine_${machine_index}
     on_press:
+      - sensor.rotary_encoder.set_value:
+          id: "encoder_${machine_index}"
+          value: 0
       - number.set:
           id: "length_${machine_index}"
-          value: !lambda |-
-            return id(length_${machine_index}).state - ${m_per_revolution};
+          value: 0
 
 sensor:
   - platform: rotary_encoder
     id: "encoder_${machine_index}"
     name: "Encoder ${machine_index}"
-    pin_a: "${encoder_pin_a}"
-    pin_b: "${encoder_pin_b}"
+    pin_a:
+      number: "${encoder_pin_a}"
+      mode:
+        input: true
+        pullup: true
+    pin_b:
+      number: "${encoder_pin_b}"
+      mode:
+        input: true
+        pullup: true
     icon: mdi:rotate-right
     web_server:
       sorting_group_id: group_machine_${machine_index}
     filters:
-      # NOTE: 100P/R
-      - multiply: !lambda return 0.01;
+      - multiply: ${encoder_factor}
+      - round: 0
+      - delta: 1
     on_value:
       - number.set:
           id: "length_${machine_index}"

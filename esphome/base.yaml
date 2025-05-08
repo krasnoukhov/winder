@@ -1,6 +1,6 @@
 substitutions:
   device_name: winder-${index}
-  toggle_relay_below: "10"
+  toggle_relay_below: "100"
   m_per_revolution: "0.174" # TODO: calibration
 
 esphome:
@@ -24,11 +24,105 @@ logger:
   level: DEBUG
   logs:
     component: ERROR
+    number: INFO
+    sensor: INFO
 
 api:
 
 ota:
   platform: esphome
+
+i2c:
+  sda: GPIO13
+  scl: GPIO14
+  frequency: 800kHz
+
+globals:
+  - id: menu_editing
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+text_sensor:
+  - platform: template
+    id: keypad_value
+    name: Keypad value
+    icon: mdi:dialpad
+
+display:
+  - platform: lcd_pcf8574
+    id: lcd
+    dimensions: 20x4
+    address: 0x27
+    lambda: |-
+      id(menu).draw();
+
+matrix_keypad:
+  id: keypad
+  columns:
+    - pin: GPIO36
+    - pin: GPIO39
+    - pin: GPIO34
+    - pin: GPIO35
+  rows:
+    - pin: GPIO27
+    - pin: GPIO26
+    - pin: GPIO25
+    - pin: GPIO33
+    - pin: GPIO32
+  keys: "ab#*123u456d789el0rx"
+  has_pulldowns: true
+  on_key:
+    lambda: |-
+      if (x == 117) {
+        id(menu).up();
+      } else if (x == 100) {
+        id(menu).down();
+      } else if (x == 120) {
+        id(menu).enter();
+      } else if (x == 101) {
+        id(menu).show_main();
+      } else if (x == 108) {
+        id(menu).left();
+      } else if (x == 114) {
+        id(menu).right();
+      } else {
+        ESP_LOGI("keypad", "key %d pressed", x);
+      }
+
+key_collector:
+  - id: collector
+    source_id: keypad
+    max_length: 7
+    clear_keys: "e"
+    allowed_keys: "0123456789"
+    on_progress:
+      - text_sensor.template.publish:
+          id: keypad_value
+          state: !lambda "return x.c_str();"
+
+lcd_menu:
+  id: menu
+  display_id: lcd
+  active: true
+  mode: joystick
+  items:
+    - !include
+      file: menu-item.yaml
+      vars:
+        machine_index: "${machine_index_1}"
+    - !include
+      file: menu-item.yaml
+      vars:
+        machine_index: "${machine_index_2}"
+    - !include
+      file: menu-item.yaml
+      vars:
+        machine_index: "${machine_index_3}"
+    - !include
+      file: menu-item.yaml
+      vars:
+        machine_index: "${machine_index_4}"
 
 web_server:
   version: 3
@@ -54,6 +148,7 @@ packages:
       output_pin: GPIO23
       encoder_pin_a: GPIO21
       encoder_pin_b: GPIO19
+      encoder_factor: "${encoder_factor_1}"
   machine_2: !include
     file: machine.yaml
     vars:
@@ -61,6 +156,7 @@ packages:
       output_pin: GPIO22
       encoder_pin_a: GPIO18
       encoder_pin_b: GPIO17
+      encoder_factor: "${encoder_factor_2}"
   machine_3: !include
     file: machine.yaml
     vars:
@@ -68,6 +164,7 @@ packages:
       output_pin: GPIO1
       encoder_pin_a: GPIO16
       encoder_pin_b: GPIO4
+      encoder_factor: "${encoder_factor_3}"
   machine_4: !include
     file: machine.yaml
     vars:
@@ -75,95 +172,4 @@ packages:
       output_pin: GPIO3
       encoder_pin_a: GPIO2
       encoder_pin_b: GPIO15
-
-matrix_keypad:
-  id: keypad
-  columns:
-    - pin: GPIO36
-    - pin: GPIO39
-    - pin: GPIO34
-    - pin: GPIO35
-  rows:
-    # - pin: GPIO27
-    - pin: GPIO26
-    - pin: GPIO25
-    - pin: GPIO33
-    - pin: GPIO32
-  # keys: "ab#*123u456d789el0rx"
-  keys: "123u456d789el0rx"
-  has_pulldowns: true
-  on_key:
-    lambda: |-
-      if (x == 117) {
-        id(menu).up();
-      } else if (x == 100) {
-        id(menu).down();
-      } else if (x == 120) {
-        id(menu).enter();
-      } else if (x == 101) {
-        id(menu).show_main();
-      } else if (x == 108) {
-        id(menu).left();
-      } else if (x == 114) {
-        id(menu).right();
-      } else {
-        ESP_LOGI("keypad", "key %d pressed", x);
-      }
-
-key_collector:
-  - id: collector
-    source_id: keypad
-    max_length: 12
-    clear_keys: "e"
-    allowed_keys: "0123456789"
-    on_progress:
-      - text_sensor.template.publish:
-          id: keypad_value
-          state: !lambda "return x.c_str();"
-
-text_sensor:
-  - platform: template
-    name: Keypad value
-    id: keypad_value
-
-globals:
-  - id: menu_editing
-    type: int
-    restore_value: no
-    initial_value: "0"
-
-i2c:
-  sda: GPIO13
-  scl: GPIO14
-  frequency: 800kHz
-
-display:
-  - platform: lcd_pcf8574
-    id: lcd
-    dimensions: 20x4
-    address: 0x27
-    lambda: |-
-      id(menu).draw();
-
-lcd_menu:
-  id: menu
-  display_id: lcd
-  active: true
-  mode: joystick
-  items:
-    - !include
-      file: menu-item.yaml
-      vars:
-        machine_index: "${machine_index_1}"
-    - !include
-      file: menu-item.yaml
-      vars:
-        machine_index: "${machine_index_2}"
-    - !include
-      file: menu-item.yaml
-      vars:
-        machine_index: "${machine_index_3}"
-    - !include
-      file: menu-item.yaml
-      vars:
-        machine_index: "${machine_index_4}"
+      encoder_factor: "${encoder_factor_4}"
