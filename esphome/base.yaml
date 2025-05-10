@@ -71,7 +71,6 @@ matrix_keypad:
     - pin: GPIO33
     - pin: GPIO32
   keys: "ab#*123u456d789el0rx"
-  has_pulldowns: true
   on_key:
     lambda: |-
       if (x == 117) {
