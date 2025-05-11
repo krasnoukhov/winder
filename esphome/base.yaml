@@ -1,7 +1,7 @@
 substitutions:
   device_name: winder-${index}
   toggle_relay_below: "100"
-  m_per_revolution: "0.174" # TODO: calibration
+  m_per_revolution: "0.174"
 
 esphome:
   name: "${device_name}"
@@ -14,7 +14,7 @@ esp32:
 wifi:
   ap:
     ssid: "${device_name}"
-    password: ESPHome123
+    password: winder123
 
 captive_portal:
 
@@ -65,12 +65,13 @@ matrix_keypad:
     - pin: GPIO34
     - pin: GPIO35
   rows:
-    - pin: GPIO27
+    # - pin: GPIO27
     - pin: GPIO26
     - pin: GPIO25
     - pin: GPIO33
     - pin: GPIO32
-  keys: "ab#*123u456d789el0rx"
+  # keys: "ab#*123u456d789el0rx"
+  keys: "123u456d789el0rx"
   on_key:
     lambda: |-
       if (x == 117) {
@@ -168,7 +169,8 @@ packages:
     file: machine.yaml
     vars:
       machine_index: "${machine_index_4}"
-      output_pin: GPIO3
+      # output_pin: GPIO3
+      output_pin: GPIO27
       encoder_pin_a: GPIO2
       encoder_pin_b: GPIO15
       encoder_factor: "${encoder_factor_4}"
