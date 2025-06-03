@@ -1,0 +1,10 @@
+services:
+  esphome:
+    container_name: esphome
+    image: ghcr.io/esphome/esphome
+    volumes:
+      - ./config:/config
+      - .:/config/winder
+    restart: always
+    privileged: true
+    network_mode: host
